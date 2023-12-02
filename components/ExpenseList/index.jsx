@@ -25,7 +25,7 @@ function ExpenseList({ setToast }) {
 
   useEffect(() => {
     getAllExpense();
-  }, []);
+  }, [page, limit]);
 
   const { data, error, isLoading } = useSWR(
     `api/expenses?page=${page}&limit=${limit}`
@@ -54,7 +54,6 @@ function ExpenseList({ setToast }) {
     const data = await response.json();
     setAllExp(data);
   }
-
   // Function to clear all filters
   function handleClearFilters() {
     setSelectedCategory("");
@@ -106,7 +105,6 @@ function ExpenseList({ setToast }) {
   );
   const categoryNames = Array.from(new Set(expenseCategoryNames));
 
-  // Filter expenses based on selected filters
   const filteredExpenses = expenses.filter((expense) => {
     const categoryMatch =
       !selectedCategory || expense.categoryId[0]?.name === selectedCategory;
@@ -123,6 +121,13 @@ function ExpenseList({ setToast }) {
 
     return categoryMatch && rangeMatch && dateRange;
   });
+
+  const allExpTotal = allExp
+    .reduce((total, expense) => total + expense.amount, 0)
+    .toFixed(2);
+  const allExpFilter = filteredExpenses
+    .reduce((total, expense) => total + expense.amount, 0)
+    .toFixed(2);
 
   return (
     <StyledContainer $isFlexEnd>
@@ -145,14 +150,10 @@ function ExpenseList({ setToast }) {
       <StyledSummaryBox>
         <StyledText>Total</StyledText>
         <StyledText $isSummaryNumber>
-          -
-          {allExp
-            .reduce((total, expense) => total + expense.amount, 0)
-            .toFixed(2)}{" "}
-          €
+          -{isFiltered ? allExpFilter : allExpTotal} €
         </StyledText>
       </StyledSummaryBox>
-      <Expenses expenses={filteredExpenses} />
+      <Expenses expenses={isFiltered ? filteredExpenses : expenses} />
 
       <ListItemPagination
         limit={limit}
